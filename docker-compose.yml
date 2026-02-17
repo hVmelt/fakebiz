@@ -1,4 +1,3 @@
-
 services:
   db:
     image: postgres:16
@@ -20,6 +19,10 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql+psycopg2://minibiz:minibizpw@db:5432/minibiz
+    volumes:
+      # mount your local code into the container
+      - ./api/app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
   db_data:

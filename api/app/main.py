@@ -1,7 +1,7 @@
 import time
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, func
 from .db import Base, engine, get_db
 from .models import Product
 from .schemas import ProductCreate, ProductOut
@@ -125,3 +125,39 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
 def list_orders(db: Session = Depends(get_db)):
     orders = db.execute(select(Order).order_by(Order.id)).scalars().all()
     return orders
+
+@app.get("/reports/revenue")
+def get_revenue(db: Session = Depends(get_db)):
+    total = db.execute(
+        select(func.coalesce(func.sum(OrderItem.qty * OrderItem.price_at_purchase), 0))
+    ).scalar_one()
+
+    return {"total_revenue": float(total)}
+
+@app.get("/reports/top-products")
+def top_products(limit: int = 5, db: Session = Depends(get_db)):
+    results = db.execute(
+        select(
+            OrderItem.product_id,
+            func.sum(OrderItem.qty).label("units_sold")
+        )
+        .group_by(OrderItem.product_id)
+        .order_by(func.sum(OrderItem.qty).desc())
+        .limit(limit)
+    ).all()
+
+    return [
+        {"product_id": pid, "units_sold": int(units)}
+        for pid, units in results
+    ]
+
+@app.get("/reports/low-stock")
+def low_stock(threshold: int = 5, db: Session = Depends(get_db)):
+    products = db.execute(
+        select(Product)
+        .where(Product.stock <= threshold)
+        .order_by(Product.stock.asc())
+    ).scalars().all()
+
+    return products
+
