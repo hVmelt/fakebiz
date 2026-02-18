@@ -9,6 +9,7 @@ from .models import Product, Customer
 from .schemas import ProductCreate, ProductOut, CustomerCreate, CustomerOut
 from .models import Product, Customer, Order, OrderItem
 from sqlalchemy import text
+from fastapi.middleware.cors import CORSMiddleware
 from .schemas import (
     ProductCreate, ProductOut,
     CustomerCreate, CustomerOut,
@@ -18,6 +19,14 @@ from .schemas import (
 
 
 app = FastAPI(title="MiniBiz Ops Suite")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Create tables automatically (fine for learning; later you’ll use migrations)
 # Base.metadata.create_all(bind=engine)
