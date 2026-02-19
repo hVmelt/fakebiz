@@ -26,6 +26,52 @@
     </section>
 
     <section class="card">
+      <h2>Create Customer</h2>
+      <form id="customerForm">
+        <label>Name <input id="cname" required /></label>
+        <label>Email <input id="cemail" type="email" required /></label>
+        <button type="submit">Create</button>
+      </form>
+      <pre id="customerCreateResult" class="output"></pre>
+    </section>
+
+    <section class="card">
+      <h2>Customers</h2>
+      <button id="refreshCustomers">Refresh</button>
+      <table id="customersTable">
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Email</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Create Order</h2>
+
+      <form id="orderForm">
+        <label>
+          Customer
+          <select id="orderCustomer" required></select>
+        </label>
+
+        <label>
+          Product
+          <select id="orderProduct" required></select>
+        </label>
+
+        <label>
+          Quantity
+          <input id="orderQty" type="number" min="1" step="1" value="1" required />
+        </label>
+
+        <button type="submit">Place Order</button>
+      </form>
+
+      <pre id="orderCreateResult" class="output"></pre>
+    </section>
+
+    <section class="card">
       <h2>Products</h2>
       <button id="refreshProducts">Refresh</button>
       <table id="productsTable">
@@ -37,6 +83,18 @@
     </section>
 
     <section class="card">
+      <h2>Orders</h2>
+      <button id="refreshOrders">Refresh</button>
+      <table id="ordersTable">
+        <thead>
+          <tr><th>ID</th><th>Customer ID</th><th>Items</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+
+    <section class="card">
       <h2>Reports</h2>
       <div class="row">
         <button id="loadRevenue">Revenue</button>
@@ -45,6 +103,14 @@
       </div>
       <pre id="reportsOut" class="output"></pre>
     </section>
+
+    <section class="card">
+      <h2>Revenue</h2>
+      <div id="revenueBig" class="big-number">$0.00</div>
+      <button id="refreshRevenue">Refresh</button>
+      <div class="muted">Total revenue from all orders</div>
+    </section>
+
   </main>
 
   <script src="./app.js"></script>

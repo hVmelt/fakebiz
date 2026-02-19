@@ -36,8 +36,24 @@ class OrderCreate(BaseModel):
     customer_id: int
     items: list[OrderItemCreate] = Field(min_length=1)
 
+class CustomerMini(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+
+class ProductMini(BaseModel):
+    id: int
+    sku: str
+    name: str
+
+    class Config:
+        from_attributes = True
+
 class OrderItemOut(BaseModel):
-    product_id: int
+    product: ProductMini
     qty: int
     price_at_purchase: float
 
@@ -46,8 +62,10 @@ class OrderItemOut(BaseModel):
 
 class OrderOut(BaseModel):
     id: int
-    customer_id: int
+    customer: CustomerMini 
     items: list[OrderItemOut]
 
     class Config:
         from_attributes = True
+
+

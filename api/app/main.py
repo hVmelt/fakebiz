@@ -9,6 +9,7 @@ from .models import Product, Customer
 from .schemas import ProductCreate, ProductOut, CustomerCreate, CustomerOut
 from .models import Product, Customer, Order, OrderItem
 from sqlalchemy import text
+from sqlalchemy.orm import joinedload
 from fastapi.middleware.cors import CORSMiddleware
 from .schemas import (
     ProductCreate, ProductOut,
@@ -132,8 +133,17 @@ def create_order(payload: OrderCreate, db: Session = Depends(get_db)):
 
 @app.get("/orders", response_model=list[OrderOut])
 def list_orders(db: Session = Depends(get_db)):
-    orders = db.execute(select(Order).order_by(Order.id)).scalars().all()
+    stmt = (
+        select(Order)
+        .options(
+            joinedload(Order.customer),
+            joinedload(Order.items).joinedload(OrderItem.product),
+        )
+        .order_by(Order.id)
+    )
+    orders = db.execute(stmt).scalars().unique().all()
     return orders
+
 
 @app.get("/reports/revenue")
 def get_revenue(db: Session = Depends(get_db)):

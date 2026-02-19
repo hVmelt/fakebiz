@@ -27,10 +27,117 @@ function renderProducts(products) {
   }
 }
 
+function renderCustomers(customers) {
+  const tbody = document.querySelector("#customersTable tbody");
+  tbody.innerHTML = "";
+  for (const c of customers) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${c.id}</td><td>${c.name}</td><td>${c.email}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+function renderOrders(orders) {
+  const tbody = document.querySelector("#ordersTable tbody");
+  tbody.innerHTML = "";
+
+  for (const o of orders) {
+    const itemsText = (o.items || [])
+      .map(i => `${i.product.sku} (${i.product.name}) x${i.qty}`)
+      .join(", ");
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${o.id}</td><td>${o.customer.name}</td><td>${itemsText}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+async function refreshOrders() {
+  const orders = await api("/orders");
+  renderOrders(orders);
+}
+
+document.getElementById("refreshOrders").addEventListener("click", () => {
+  refreshOrders().catch(err => alert(err.message));
+});
+
+async function refreshCustomers() {
+  const customers = await api("/customers");
+  renderCustomers(customers);
+}
+
+function fillSelect(el, items, getValue, getLabel) {
+  el.innerHTML = "";
+  for (const item of items) {
+    const opt = document.createElement("option");
+    opt.value = getValue(item);
+    opt.textContent = getLabel(item);
+    el.appendChild(opt);
+  }
+}
+
+async function loadOrderFormOptions() {
+  const [customers, products] = await Promise.all([
+    api("/customers"),
+    api("/products"),
+  ]);
+
+  const customerSel = document.getElementById("orderCustomer");
+  const productSel = document.getElementById("orderProduct");
+
+  fillSelect(customerSel, customers, c => c.id, c => `${c.id} — ${c.name}`);
+  fillSelect(productSel, products, p => p.id, p => `${p.id} — ${p.sku} (${p.stock} in stock)`);
+}
+
 async function refreshProducts() {
   const products = await api("/products");
   renderProducts(products);
 }
+
+function formatMoney(n) {
+  const num = Number(n || 0);
+  return num.toLocaleString(undefined, { style: "currency", currency: "USD" });
+}
+
+async function refreshRevenue() {
+  const data = await api("/reports/revenue");
+
+  const revenue = data.total_revenue ?? 0;
+
+  document.getElementById("revenueBig").textContent =
+    formatMoney(revenue);
+}
+
+
+document.getElementById("refreshRevenue").addEventListener("click", () => {
+  refreshRevenue().catch(err => alert(err.message));
+});
+
+
+
+document.getElementById("refreshCustomers").addEventListener("click", () => {
+  refreshCustomers().catch(err => alert(err.message));
+});
+
+document.getElementById("customerForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const payload = {
+    name: document.getElementById("cname").value.trim(),
+    email: document.getElementById("cemail").value.trim(),
+  };
+
+  const out = document.getElementById("customerCreateResult");
+  out.textContent = "Creating...";
+  try {
+    const created = await api("/customers", { method: "POST", body: JSON.stringify(payload) });
+    out.textContent = JSON.stringify(created, null, 2);
+    await refreshCustomers();
+    e.target.reset();
+  } catch (err) {
+    out.textContent = err.message;
+  }
+});
+
 
 document.getElementById("refreshProducts").addEventListener("click", () => {
   refreshProducts().catch(err => alert(err.message));
@@ -91,5 +198,40 @@ document.getElementById("loadLowStock").addEventListener("click", async () => {
   }
 });
 
+document.getElementById("orderForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const customer_id = Number(document.getElementById("orderCustomer").value);
+  const product_id = Number(document.getElementById("orderProduct").value);
+  const qty = Number(document.getElementById("orderQty").value);
+
+  const payload = {
+    customer_id,
+    items: [{ product_id, qty }]
+  };
+
+  const out = document.getElementById("orderCreateResult");
+  out.textContent = "Placing order...";
+  try {
+    const created = await api("/orders", { method: "POST", body: JSON.stringify(payload) });
+    out.textContent = JSON.stringify(created, null, 2);
+
+    // refresh UI so you SEE stock drop
+    await refreshProducts();
+    await loadOrderFormOptions(); // updates product dropdown stock labels
+    await refreshOrders();
+  } catch (err) {
+    out.textContent = err.message;
+  }
+});
+
+
 // initial load
 refreshProducts().catch(() => {});
+refreshCustomers().catch(() => {});
+loadOrderFormOptions().catch(() => {});
+refreshOrders().catch(() => {});
+refreshRevenue().catch(() => {});
+
+
+

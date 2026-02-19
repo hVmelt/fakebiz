@@ -9,3 +9,13 @@ button { padding: 8px 12px; cursor: pointer; }
 table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th, td { border-bottom: 1px solid #eee; padding: 6px; text-align: left; }
 .output { background: #f7f7f7; padding: 10px; border-radius: 8px; overflow: auto; }
+.big-number {
+  font-size: 40px;
+  font-weight: 800;
+  margin: 10px 0 12px;
+}
+
+.muted {
+  color: #666;
+  font-size: 14px;
+}
