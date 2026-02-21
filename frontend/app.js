@@ -108,6 +108,41 @@ async function refreshRevenue() {
     formatMoney(revenue);
 }
 
+function renderLowStock(items) {
+  const list = document.getElementById("lowStockList");
+  const empty = document.getElementById("lowStockEmpty");
+
+  list.innerHTML = "";
+
+  if (!items || items.length === 0) {
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  for (const p of items) {
+    const li = document.createElement("li");
+    li.className = "alert";
+    li.innerHTML = `
+      <strong>⚠️ ${p.sku} — ${p.name}</strong>
+      <small>Stock: ${p.stock} • Price: ${p.price}</small>
+    `;
+    list.appendChild(li);
+  }
+}
+
+async function refreshLowStock() {
+  const threshold = Number(document.getElementById("lowStockThreshold").value || 5);
+  const data = await api(`/reports/low-stock?threshold=${encodeURIComponent(threshold)}`);
+  console.log("Low stock data:", data);
+  renderLowStock(data);
+}
+
+
+document.getElementById("refreshLowStock").addEventListener("click", () => {
+  refreshLowStock().catch(err => alert(err.message));
+});
+
 
 document.getElementById("refreshRevenue").addEventListener("click", () => {
   refreshRevenue().catch(err => alert(err.message));
@@ -216,22 +251,45 @@ document.getElementById("orderForm").addEventListener("submit", async (e) => {
     const created = await api("/orders", { method: "POST", body: JSON.stringify(payload) });
     out.textContent = JSON.stringify(created, null, 2);
 
-    // refresh UI so you SEE stock drop
-    await refreshProducts();
+    await refreshProducts(); // refresh UI so you SEE stock drop
     await loadOrderFormOptions(); // updates product dropdown stock labels
     await refreshOrders();
+    await refreshLowStock();
   } catch (err) {
     out.textContent = err.message;
   }
 });
 
 
-// initial load
-refreshProducts().catch(() => {});
-refreshCustomers().catch(() => {});
-loadOrderFormOptions().catch(() => {});
-refreshOrders().catch(() => {});
-refreshRevenue().catch(() => {});
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("refreshLowStock");
 
+  console.log("Low stock button found:", btn);
+
+  if (!btn) {
+    console.error("refreshLowStock button not found in DOM");
+    return;
+  }
+
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault(); // prevents form submit issues
+    console.log("Low stock refresh clicked");
+
+    try {
+      await refreshLowStock();
+    } catch (err) {
+      console.error("Low stock error:", err);
+      alert(err.message);
+    }
+  });
+
+  // initial load
+  refreshProducts().catch(() => {});
+  refreshCustomers().catch(() => {});
+  loadOrderFormOptions().catch(() => {});
+  refreshOrders().catch(() => {});
+  refreshRevenue().catch(() => {});
+  refreshLowStock().catch(() => {});
+});
 
 

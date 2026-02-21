@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>MiniBiz Dashboard</h1>
-    <p>Products • Customers • Orders • Reports</p>
+    <p class="muted">Products • Customers • Orders • Reports</p>
   </header>
 
   <main class="grid">
@@ -109,6 +109,20 @@
       <div id="revenueBig" class="big-number">$0.00</div>
       <button id="refreshRevenue">Refresh</button>
       <div class="muted">Total revenue from all orders</div>
+    </section>
+
+    <section class="card">
+      <h2>Low Stock Alerts</h2>
+      <div class="row">
+        <label class="inline">
+          Threshold
+          <input id="lowStockThreshold" type="number" min="0" step="1" value="5" />
+        </label>
+        <button id="refreshLowStock" type="button">Refresh</button>
+      </div>
+
+      <ul id="lowStockList" class="alerts"></ul>
+      <div id="lowStockEmpty" class="muted" style="display:none;">✅ No low-stock items.</div>
     </section>
 
   </main>
