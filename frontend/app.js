@@ -1,5 +1,8 @@
 const API_BASE = "http://localhost:8000";
 
+let currentOffset = 0;
+const pageSize = 5;  // change to 10 or 25 if needed
+
 async function api(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -90,8 +93,11 @@ async function loadOrderFormOptions() {
 }
 
 async function refreshProducts() {
-  const products = await api("/products");
+  const products = await api(`/products?limit=${pageSize}&offset=${currentOffset}`);
   renderProducts(products);
+
+  const currentPage = Math.floor(currentOffset / pageSize) + 1;
+  document.getElementById("pageInfo").textContent = `Page ${currentPage}`;
 }
 
 function formatMoney(n) {
@@ -137,6 +143,16 @@ async function refreshLowStock() {
   console.log("Low stock data:", data);
   renderLowStock(data);
 }
+
+document.getElementById("nextPage").addEventListener("click", async () => {
+  currentOffset += pageSize;
+  await refreshProducts();
+});
+
+document.getElementById("prevPage").addEventListener("click", async () => {
+  currentOffset = Math.max(0, currentOffset - pageSize);
+  await refreshProducts();
+});
 
 
 document.getElementById("refreshLowStock").addEventListener("click", () => {
@@ -192,7 +208,9 @@ document.getElementById("productForm").addEventListener("submit", async (e) => {
   try {
     const created = await api("/products", { method: "POST", body: JSON.stringify(payload) });
     out.textContent = JSON.stringify(created, null, 2);
+    currentOffset = 0;
     await refreshProducts();
+    await loadOrderFormOptions();
     e.target.reset();
     document.getElementById("stock").value = 0;
   } catch (err) {

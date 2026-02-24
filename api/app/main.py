@@ -72,9 +72,18 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
     return product
 
 @app.get("/products", response_model=list[ProductOut])
-def list_products(db: Session = Depends(get_db)):
-    products = db.execute(select(Product).order_by(Product.id)).scalars().all()
-    return products
+def list_products(
+    limit: int = 25,
+    offset: int = 0,
+    db: Session = Depends(get_db)
+):
+    stmt = (
+        select(Product)
+        .order_by(Product.id)
+        .limit(limit)
+        .offset(offset)
+    )
+    return db.execute(stmt).scalars().all()
 
 @app.post("/customers", response_model=CustomerOut, status_code=201)
 def create_customer(payload: CustomerCreate, db: Session = Depends(get_db)):
