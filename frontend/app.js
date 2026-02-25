@@ -1,7 +1,20 @@
 const API_BASE = "http://localhost:8000";
 
 let currentOffset = 0;
-const pageSize = 5;  // change to 10 or 25 if needed
+const pageSize = 10;  // change to 10 or 25 if needed
+let currentSearch = "";
+
+function toast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.textContent = msg;
+  document.body.appendChild(t);
+
+  setTimeout(() => {
+    t.style.opacity = "0";
+    setTimeout(() => t.remove(), 300);
+  }, 2500);
+}
 
 async function api(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -15,7 +28,10 @@ async function api(path, options = {}) {
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
 
   if (!res.ok) {
-    throw new Error(typeof data === "string" ? data : JSON.stringify(data));
+    const msg =
+      (data && typeof data === "object" && (data.detail || data.message)) ||
+      (typeof data === "string" ? data : "Request failed");
+    throw new Error(msg);
   }
   return data;
 }
@@ -93,11 +109,17 @@ async function loadOrderFormOptions() {
 }
 
 async function refreshProducts() {
-  const products = await api(`/products?limit=${pageSize}&offset=${currentOffset}`);
+  const params = new URLSearchParams();
+  params.set("limit", pageSize);
+  params.set("offset", currentOffset);
+  if (currentSearch.trim()) params.set("search", currentSearch.trim());
+
+  const products = await api(`/products?${params.toString()}`);
   renderProducts(products);
 
   const currentPage = Math.floor(currentOffset / pageSize) + 1;
-  document.getElementById("pageInfo").textContent = `Page ${currentPage}`;
+  document.getElementById("pageInfo").textContent =
+    currentSearch ? `Page ${currentPage} (search: "${currentSearch}")` : `Page ${currentPage}`;
 }
 
 function formatMoney(n) {
@@ -144,6 +166,70 @@ async function refreshLowStock() {
   renderLowStock(data);
 }
 
+async function refreshRevenueRange() {
+  const start = document.getElementById("revStart").value;
+  const end = document.getElementById("revEnd").value;
+
+  const params = new URLSearchParams();
+  if (start) params.set("start", start);
+  if (end) params.set("end", end);
+
+  const data = await api(`/reports/revenue-range?${params.toString()}`);
+
+  const revenue = data.total_revenue ?? 0;
+  document.getElementById("revenueBig").textContent = formatMoney(revenue);
+}
+
+document.getElementById("refreshRevenueRange").addEventListener("click", () => {
+  refreshRevenueRange().catch(err => alert(err.message));
+});
+
+document.getElementById("clearRevenueRange").addEventListener("click", async () => {
+  document.getElementById("revStart").value = "";
+  document.getElementById("revEnd").value = "";
+  await refreshRevenue(); // your existing all-time revenue endpoint
+});
+
+const revBtn = document.getElementById("refreshRevenueRange");
+if (revBtn) {
+  revBtn.addEventListener("click", () => {
+    refreshRevenueRange().catch(err => alert(err.message));
+  });
+}
+
+const revClearBtn = document.getElementById("clearRevenueRange");
+if (revClearBtn) {
+  revClearBtn.addEventListener("click", async () => {
+    const s = document.getElementById("revStart");
+    const e = document.getElementById("revEnd");
+    if (s) s.value = "";
+    if (e) e.value = "";
+    await refreshRevenue().catch(err => alert(err.message));
+  });
+}
+
+document.getElementById("searchProducts").addEventListener("click", async () => {
+  currentSearch = document.getElementById("productSearch").value;
+  currentOffset = 0;
+  await refreshProducts();
+});
+
+document.getElementById("clearSearch").addEventListener("click", async () => {
+  currentSearch = "";
+  document.getElementById("productSearch").value = "";
+  currentOffset = 0;
+  await refreshProducts();
+});
+
+document.getElementById("productSearch").addEventListener("keydown", async (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    currentSearch = e.target.value;
+    currentOffset = 0;
+    await refreshProducts();
+  }
+});
+
 document.getElementById("nextPage").addEventListener("click", async () => {
   currentOffset += pageSize;
   await refreshProducts();
@@ -165,27 +251,29 @@ document.getElementById("refreshRevenue").addEventListener("click", () => {
 });
 
 
-
 document.getElementById("refreshCustomers").addEventListener("click", () => {
   refreshCustomers().catch(err => alert(err.message));
 });
 
-document.getElementById("customerForm").addEventListener("submit", async (e) => {
+document.getElementById("customerForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const payload = {
     name: document.getElementById("cname").value.trim(),
     email: document.getElementById("cemail").value.trim(),
   };
 
-  const out = document.getElementById("customerCreateResult");
-  out.textContent = "Creating...";
   try {
-    const created = await api("/customers", { method: "POST", body: JSON.stringify(payload) });
-    out.textContent = JSON.stringify(created, null, 2);
+    await api("/customers", { method: "POST", body: JSON.stringify(payload) });
+
     await refreshCustomers();
+    await loadOrderFormOptions();
     e.target.reset();
+
+    toast("Customer created successfully ✅");
   } catch (err) {
-    out.textContent = err.message;
+    toast(err.message || "Error creating customer ❌");
+    console.error(err);
   }
 });
 
@@ -194,8 +282,9 @@ document.getElementById("refreshProducts").addEventListener("click", () => {
   refreshProducts().catch(err => alert(err.message));
 });
 
-document.getElementById("productForm").addEventListener("submit", async (e) => {
+document.getElementById("productForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const payload = {
     sku: document.getElementById("sku").value.trim(),
     name: document.getElementById("name").value.trim(),
@@ -203,55 +292,58 @@ document.getElementById("productForm").addEventListener("submit", async (e) => {
     stock: Number(document.getElementById("stock").value),
   };
 
-  const out = document.getElementById("productCreateResult");
-  out.textContent = "Creating...";
   try {
-    const created = await api("/products", { method: "POST", body: JSON.stringify(payload) });
-    out.textContent = JSON.stringify(created, null, 2);
+    await api("/products", { method: "POST", body: JSON.stringify(payload) });
+
+    // reset + refresh UI
+    e.target.reset();
+    document.getElementById("stock").value = 0;
+
     currentOffset = 0;
     await refreshProducts();
     await loadOrderFormOptions();
-    e.target.reset();
-    document.getElementById("stock").value = 0;
+
+    toast("Product created ✅");
   } catch (err) {
-    out.textContent = err.message;
+    toast(err.message || "Failed to create product ❌");
+    console.error(err);
   }
 });
 
-document.getElementById("loadRevenue").addEventListener("click", async () => {
-  const out = document.getElementById("reportsOut");
-  out.textContent = "Loading...";
-  try {
-    const data = await api("/reports/revenue");
-    out.textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    out.textContent = err.message;
-  }
-});
+// document.getElementById("loadRevenue").addEventListener("click", async () => {
+//   const out = document.getElementById("reportsOut");
+//   out.textContent = "Loading...";
+//   try {
+//     const data = await api("/reports/revenue");
+//     out.textContent = JSON.stringify(data, null, 2);
+//   } catch (err) {
+//     out.textContent = err.message;
+//   }
+// });
 
-document.getElementById("loadTop").addEventListener("click", async () => {
-  const out = document.getElementById("reportsOut");
-  out.textContent = "Loading...";
-  try {
-    const data = await api("/reports/top-products?limit=5");
-    out.textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    out.textContent = err.message;
-  }
-});
+// document.getElementById("loadTop").addEventListener("click", async () => {
+//   const out = document.getElementById("reportsOut");
+//   out.textContent = "Loading...";
+//   try {
+//     const data = await api("/reports/top-products?limit=5");
+//     out.textContent = JSON.stringify(data, null, 2);
+//   } catch (err) {
+//     out.textContent = err.message;
+//   }
+// });
 
-document.getElementById("loadLowStock").addEventListener("click", async () => {
-  const out = document.getElementById("reportsOut");
-  out.textContent = "Loading...";
-  try {
-    const data = await api("/reports/low-stock?threshold=5");
-    out.textContent = JSON.stringify(data, null, 2);
-  } catch (err) {
-    out.textContent = err.message;
-  }
-});
+// document.getElementById("loadLowStock").addEventListener("click", async () => {
+//   const out = document.getElementById("reportsOut");
+//   out.textContent = "Loading...";
+//   try {
+//     const data = await api("/reports/low-stock?threshold=5");
+//     out.textContent = JSON.stringify(data, null, 2);
+//   } catch (err) {
+//     out.textContent = err.message;
+//   }
+// });
 
-document.getElementById("orderForm").addEventListener("submit", async (e) => {
+document.getElementById("orderForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const customer_id = Number(document.getElementById("orderCustomer").value);
@@ -263,18 +355,19 @@ document.getElementById("orderForm").addEventListener("submit", async (e) => {
     items: [{ product_id, qty }]
   };
 
-  const out = document.getElementById("orderCreateResult");
-  out.textContent = "Placing order...";
   try {
-    const created = await api("/orders", { method: "POST", body: JSON.stringify(payload) });
-    out.textContent = JSON.stringify(created, null, 2);
+    await api("/orders", { method: "POST", body: JSON.stringify(payload) });
 
-    await refreshProducts(); // refresh UI so you SEE stock drop
-    await loadOrderFormOptions(); // updates product dropdown stock labels
+    await refreshProducts();
+    await loadOrderFormOptions();
     await refreshOrders();
     await refreshLowStock();
+
+    e.target.reset();
+    toast("Order created successfully ✅");
   } catch (err) {
-    out.textContent = err.message;
+    toast(err.message || "Error creating order ❌");
+    console.error(err);
   }
 });
 

@@ -1,7 +1,7 @@
-import time
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import select
+from sqlalchemy import func
 from .db import Base, engine, get_db
 from .models import Product
 from .schemas import ProductCreate, ProductOut
@@ -11,13 +11,17 @@ from .models import Product, Customer, Order, OrderItem
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import or_
+from datetime import date, datetime, time
+from fastapi import Query
 from .schemas import (
     ProductCreate, ProductOut,
     CustomerCreate, CustomerOut,
     OrderCreate, OrderOut
 )
 
-
+local_dt = func.timezone("America/Chicago", func.timezone("UTC", Order.created_at))
+local_date = func.date(local_dt)
 
 app = FastAPI(title="MiniBiz Ops Suite")
 app.add_middleware(
@@ -73,16 +77,25 @@ def create_product(payload: ProductCreate, db: Session = Depends(get_db)):
 
 @app.get("/products", response_model=list[ProductOut])
 def list_products(
+    search: str | None = None,
     limit: int = 25,
     offset: int = 0,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    stmt = (
-        select(Product)
-        .order_by(Product.id)
-        .limit(limit)
-        .offset(offset)
-    )
+    stmt = select(Product)
+
+    if search:
+        q = f"%{search.strip()}%"
+        stmt = stmt.where(
+            or_(
+                Product.sku.ilike(q),
+                Product.name.ilike(q),
+            )
+        )
+
+    stmt = stmt.order_by(Product.id)
+    stmt = stmt.limit(limit).offset(offset)
+
     return db.execute(stmt).scalars().all()
 
 @app.post("/customers", response_model=CustomerOut, status_code=201)
@@ -188,4 +201,23 @@ def low_stock(threshold: int = 5, db: Session = Depends(get_db)):
     ).scalars().all()
 
     return products
+
+@app.get("/reports/revenue-range")
+def revenue_range(start: date | None = None, end: date | None = None, db: Session = Depends(get_db)):
+    local_dt = func.timezone("America/Chicago", func.timezone("UTC", Order.created_at))
+    local_date = func.date(local_dt)
+
+    stmt = (
+        select(func.coalesce(func.sum(OrderItem.qty * OrderItem.price_at_purchase), 0))
+        .select_from(OrderItem)
+        .join(Order, OrderItem.order_id == Order.id)
+    )
+
+    if start:
+        stmt = stmt.where(local_date >= start)
+    if end:
+        stmt = stmt.where(local_date <= end)
+
+    total = db.execute(stmt).scalar_one()
+    return {"total_revenue": float(total), "start": start, "end": end}
 

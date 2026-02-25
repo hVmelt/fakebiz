@@ -1,56 +1,12 @@
-body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; }
-header { padding: 16px 20px; border-bottom: 1px solid #ddd; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; padding: 16px; }
+/* ============================= */
+/* GLOBAL RESET + VARIABLES */
+/* ============================= */
 
-label { display: block; margin: 10px 0; }
-input { width: 100%; padding: 8px; margin-top: 4px; }
-button { padding: 8px 12px; cursor: pointer; }
-.row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-th, td { border-bottom: 1px solid #eee; padding: 6px; text-align: left; }
-.output { background: #f7f7f7; padding: 10px; border-radius: 8px; overflow: auto; }
-
-.card {
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(18,26,42,0.9) 0%, rgba(15,22,38,0.9) 100%);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-
-.grid {
-  gap: 18px;
-  padding: 18px;
-}
-
-.big-number {
-  font-size: 44px;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  margin: 10px 0 12px;
-  color: #dbe8ff;
-}
-
-.muted { color: var(--muted); }
-
-.muted {
-  color: #666;
-  font-size: 14px;
-}
-.inline { display: flex; gap: 8px; align-items: center; }
-.inline input { width: 90px; }
-
-.alerts { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 10px; }
-
-.alert {
-  border: 1px solid rgba(255, 153, 153, 0.25);
-  background: rgba(255, 80, 80, 0.10);
-  padding: 12px;
-  border-radius: 14px;
-}
-
-.alert strong { display: block; }
-.alert small { color: var(--muted); }
 
 :root {
   --bg: #0b0f19;
@@ -63,22 +19,102 @@ th, td { border-bottom: 1px solid #eee; padding: 6px; text-align: left; }
 }
 
 body {
-  background: radial-gradient(1200px 600px at 20% 0%, #1a2a55 0%, transparent 55%),
-              radial-gradient(900px 500px at 90% 10%, #2a1a55 0%, transparent 50%),
-              var(--bg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 20% 0%, #1a2a55 0%, transparent 55%),
+    radial-gradient(900px 500px at 90% 10%, #2a1a55 0%, transparent 50%),
+    var(--bg);
   color: var(--text);
 }
 
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
 header {
+  padding: 18px 24px;
   border-bottom: 1px solid var(--border);
   background: rgba(18, 26, 42, 0.6);
   backdrop-filter: blur(10px);
 }
 
-header h1 { margin: 0; letter-spacing: 0.2px; }
-header p { margin: 6px 0 0; color: var(--muted); }
+header h1 {
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+/* ============================= */
+/* GRID LAYOUT */
+/* ============================= */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+
+  width: 100%;
+  max-width: 1200px;
+  margin: 24px auto 40px auto;
+
+  padding: 0 20px;
+}
+
+/* ============================= */
+/* CARD */
+/* ============================= */
+
+.card {
+  background: linear-gradient(145deg, #0f172a, #111827);
+  padding: 24px;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  width: 100%;
+}
+
+/* ============================= */
+/* FORMS */
+/* ============================= */
+
+label {
+  display: block;
+  margin: 12px 0;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.06);
+  color: var(--text);
+  border-radius: 10px;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: rgba(110,168,255,0.55);
+  box-shadow: 0 0 0 3px rgba(110,168,255,0.18);
+}
+
+select,
+option {
+  color: #111;
+  background: #fff;
+}
 
 button {
+  padding: 10px 14px;
+  cursor: pointer;
   border: 1px solid var(--border);
   background: rgba(110,168,255,0.15);
   color: var(--text);
@@ -91,23 +127,37 @@ button:hover {
   border-color: rgba(110,168,255,0.35);
 }
 
-button:active { transform: translateY(1px); }
-
-input, select {
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.06);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 10px;
-  outline: none;
+button:active {
+  transform: translateY(1px);
 }
 
-input:focus, select:focus {
-  border-color: rgba(110,168,255,0.55);
-  box-shadow: 0 0 0 3px rgba(110,168,255,0.18);
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.inline input {
+  width: 90px;
+}
+
+/* ============================= */
+/* TABLES */
+/* ============================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
 thead th {
   font-size: 12px;
   text-transform: uppercase;
@@ -116,8 +166,68 @@ thead th {
   border-bottom: 1px solid var(--border);
   padding: 10px 8px;
 }
+
 tbody td {
   border-bottom: 1px solid var(--border);
   padding: 10px 8px;
 }
-tbody tr:hover { background: rgba(255,255,255,0.04); }
+
+tbody tr:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+/* ============================= */
+/* BIG NUMBER */
+/* ============================= */
+
+.big-number {
+  font-size: 44px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin: 10px 0 12px;
+  color: #dbe8ff;
+}
+
+/* ============================= */
+/* ALERTS */
+/* ============================= */
+
+.alerts {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.alert {
+  border: 1px solid rgba(255, 153, 153, 0.25);
+  background: rgba(255, 80, 80, 0.10);
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.alert strong {
+  display: block;
+}
+
+.alert small {
+  color: var(--muted);
+}
+
+/* ============================= */
+/* TOAST */
+/* ============================= */
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #1f2937;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: opacity 0.3s ease;
+  z-index: 9999;
+}

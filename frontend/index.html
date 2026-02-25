@@ -13,6 +13,7 @@
   </header>
 
   <main class="grid">
+    <div class="form-grid">
     <section class="card">
       <h2>Create Product</h2>
       <form id="productForm">
@@ -22,9 +23,10 @@
         <label>Stock <input id="stock" type="number" step="1" min="0" value="0" required /></label>
         <button type="submit">Create</button>
       </form>
-      <pre id="productCreateResult" class="output"></pre>
     </section>
+    </div>
 
+    <div class="form-grid">
     <section class="card">
       <h2>Create Customer</h2>
       <form id="customerForm">
@@ -32,20 +34,10 @@
         <label>Email <input id="cemail" type="email" required /></label>
         <button type="submit">Create</button>
       </form>
-      <pre id="customerCreateResult" class="output"></pre>
     </section>
+    </div>
 
-    <section class="card">
-      <h2>Customers</h2>
-      <button id="refreshCustomers">Refresh</button>
-      <table id="customersTable">
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Email</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
+    <div class="form-grid">
     <section class="card">
       <h2>Create Order</h2>
 
@@ -67,13 +59,17 @@
 
         <button type="submit">Place Order</button>
       </form>
-
-      <pre id="orderCreateResult" class="output"></pre>
     </section>
+    </div>
 
     <section class="card">
       <h2>Products</h2>
       <button id="refreshProducts">Refresh</button>
+      <div class="row">
+        <input id="productSearch" placeholder="Search SKU or name..." />
+        <button id="searchProducts" type="button">Search</button>
+        <button id="clearSearch" type="button">Clear</button>
+      </div>
       <table id="productsTable">
         <div class="row">
           <button id="prevPage" type="button">Previous</button>
@@ -82,6 +78,17 @@
         </div>
         <thead>
           <tr><th>ID</th><th>SKU</th><th>Name</th><th>Price</th><th>Stock</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Customers</h2>
+      <button id="refreshCustomers">Refresh</button>
+      <table id="customersTable">
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Email</th></tr>
         </thead>
         <tbody></tbody>
       </table>
@@ -99,21 +106,35 @@
     </section>
 
 
-    <section class="card">
-      <h2>Reports</h2>
-      <div class="row">
-        <button id="loadRevenue">Revenue</button>
-        <button id="loadTop">Top Products</button>
-        <button id="loadLowStock">Low Stock</button>
-      </div>
-      <pre id="reportsOut" class="output"></pre>
-    </section>
+    <!-- <section class="card">
+            <h2>Reports</h2>
+            <div class="row">
+              <button id="loadRevenue">Revenue</button>
+              <button id="loadTop">Top Products</button>
+              <button id="loadLowStock">Low Stock</button>
+            </div>
+            <pre id="reportsOut" class="output"></pre>
+          </section> -->
 
     <section class="card">
-      <h2>Revenue</h2>
-      <div id="revenueBig" class="big-number">$0.00</div>
-      <button id="refreshRevenue">Refresh</button>
-      <div class="muted">Total revenue from all orders</div>
+        <h2>Revenue</h2>
+          <div id="revenueBig" class="big-number">$0.00</div>
+          <div class="row">
+            <label class="inline">
+              Start
+              <input id="revStart" type="date" />
+            </label>
+
+            <label class="inline">
+              End
+              <input id="revEnd" type="date" />
+            </label>
+
+            <button id="refreshRevenueRange" type="button">Date Range</button>
+            <button id="clearRevenueRange" type="button">All Time</button>
+          </div>
+          <button id="refreshRevenue">Refresh</button>
+          <div class="muted">Total revenue from all orders</div>
     </section>
 
     <section class="card">
