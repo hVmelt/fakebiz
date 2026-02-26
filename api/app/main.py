@@ -23,7 +23,7 @@ from .schemas import (
 local_dt = func.timezone("America/Chicago", func.timezone("UTC", Order.created_at))
 local_date = func.date(local_dt)
 
-app = FastAPI(title="MiniBiz Ops Suite")
+app = FastAPI(title="Fake Business Backend")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:8080"],
